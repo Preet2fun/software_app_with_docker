@@ -1,0 +1,75 @@
+# Docker command to clean up unused Container, networks, images, and the build cache can be cleaned up by executing below command:
+  docker system prune -a
+
+# you can also remove unused volumes by executing belwo command:
+  docker system prune --volumes
+
+# use belwo command for getting docker image inspect specific information
+  docker inspect d0d03989cd8e --format '{{json .GraphDriver.Data}}'
+
+# to see only image id list use below command
+  docker image ls -q
+
+# to see contianer id of lastly created container
+  docker container ls -lq
+
+# we can create image from running container using below command
+  docker container commit <container_id> <image_name_with_tag>
+
+# To export file system from running container and to import that exported tar to image use belwo commnd.
+  docker conatiner export -o centos-1.1.tar $(docker container ls -lq)
+  docker image import centos-1.1.tar centos:1.1
+   
+
+SAVE and Load work with docker image where as export and import work with docker containier.
+1) save - works with Docker images. It saves everything needed to build a container from scratch. Use this command if you want to share an image with others.
+2) load - works with Docker images. Use this command if you want to run an image exported with save. Unlike pull, which requires connecting to a Docker registry, load can import from anywhere (e.g. a file system, URLs).
+3) export - works with Docker containers, and it exports a snapshot of the container’s file system. Use this command if you want to share or back up the result of building an image.
+4) import - works with the file system of an exported container, and it imports it as a Docker image. Use this command if you have an exported file system you want to explore or use as a layer for a new image.
+
+
+# docker run --cap-add=NET_ADMIN will apply additional linux capibilities.
+# For interacting with the network stack, instead of using --privileged they should use --cap-add=NET_ADMIN to modify the network interfaces.
+
+docker container run -d --name nginxdemo --cap-add NET_ADMIN -p 80:80 nginx:1.13
+docker exec -it nginxdemo sh -c "sleep 15; ip link set lo down; sleep 15; ip link set lo up" &
+docker system events --since 1h --filter event=health_status
+
+Health Check Configuration
+To finish off, let's discuss the HEALTHCHECK options available. 
+
+There are a few options that we can use to customize our HEALTHCHECK instruction:
+
+interval - DURATION (default: 30s)
+timeout - DURATION (default: 30s)
+start-period - DURATION (default: 0s)
+retries - DURATION (default: 3)
+
+Interval - specifies the time between the health check for the application container. it waits for the specified time from one check to another.
+Timeout - specifies the time that the health check waits for a response to consider the status of the container. For example, if we define 30 seconds and our server doesn’t respond within 30 seconds, then it’s considered as failed.
+Start-period - specifies the number of seconds the container needs to start; health check will wait for that time to start.
+Retries - specifies the number of consecutive health check failures required to declare the container status as unhealthy. Health check will only try up to the specified retry number. If the server fails consecutively up to the specified times, it is then considered unhealthy.
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+
+The ONBUILD instruction adds to the image a trigger instruction to be executed at a later time, when the image is used as the base 
+for another build. The trigger will be executed in the context of the downstream build, as if it had been inserted immediately 
+after the FROM instruction in the downstream Dockerfile.
+So what does that mean? Let's take this Nodejs Dockerfile:
+
+FROM node:0.12.6
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+ONBUILD COPY package.json /usr/src/app/
+ONBUILD RUN npm install
+ONBUILD COPY . /usr/src/app
+
+CMD [ "npm", "start" ]
+
+How does ONBUILD work?
+When it encounters an ONBUILD instruction, the builder adds a trigger to the metadata of the image being built. The instruction does not otherwise affect the current build.
+At the end of the build, a list of all triggers is stored in the image manifest, under the key OnBuild. They can be inspected with the docker inspect command.
+Later the image may be used as a base for a new build, using the FROM instruction. As part of processing the FROM instruction, the downstream builder looks for ONBUILD triggers, and executes them in the same order they were registered. If any of the triggers fail, the FROM instruction is aborted which in turn causes the build to fail. If all triggers succeed, the FROM instruction completes and the build continues as usual.
+Triggers are cleared from the final image after being executed. In other words they are not inherited by “grand-children” builds.
