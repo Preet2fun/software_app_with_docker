@@ -73,3 +73,12 @@ When it encounters an ONBUILD instruction, the builder adds a trigger to the met
 At the end of the build, a list of all triggers is stored in the image manifest, under the key OnBuild. They can be inspected with the docker inspect command.
 Later the image may be used as a base for a new build, using the FROM instruction. As part of processing the FROM instruction, the downstream builder looks for ONBUILD triggers, and executes them in the same order they were registered. If any of the triggers fail, the FROM instruction is aborted which in turn causes the build to fail. If all triggers succeed, the FROM instruction completes and the build continues as usual.
 Triggers are cleared from the final image after being executed. In other words they are not inherited by “grand-children” builds.
+
+
+To use the access token from your Docker CLI client:
+1. Run docker login --username preet2fun
+2. At the password prompt, enter the personal access token.
+c6791747-0922-45fb-925a-57f7fdd857b1 or password
+
+docker tag local-image:tagname new-repo:tagname
+docker push new-repo:tagname
