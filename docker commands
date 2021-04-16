@@ -81,4 +81,6 @@ To use the access token from your Docker CLI client:
 c6791747-0922-45fb-925a-57f7fdd857b1 or password
 
 docker tag local-image:tagname new-repo:tagname
+docker tag nginx:latest preet2fun/nginx:1.0
 docker push new-repo:tagname
+docker push preet2fun/nginx:1.0
